@@ -1,5 +1,5 @@
-import csv
 import time
+from json import dumps
 from pysnmp.hlapi import *
 
 filename:str = "snmp_data.csv"
@@ -25,16 +25,15 @@ def snmp_get_oid(iod):
     else:
         if errorStatus:
             error = errorIndex and varBinds[int(errorIndex) - 1][0] or '?'
-            with open(filename, 'a', newline='') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=header)
-                writer.writerow(f'{errorStatus.prettyPrint()} at {error}')
+            with open(filename, 'a', newline='') as txtfile:
+                txtfile.write(f'{errorStatus.prettyPrint()} at {error}')
             
             print('%s at %s' % (errorStatus.prettyPrint(),
                                 errorIndex and varBinds[int(errorIndex) - 1][0] or '?'))
         else:
             for varBind in varBinds:
                 oid, value = [x.prettyPrint() for x in varBind]
-            return int(value)/1000
+            return format(int(value)/1000, '.1f')
 
 
 def result_to_file():
@@ -42,9 +41,8 @@ def result_to_file():
     for oid in oid_lst:
         result.append(snmp_get_oid(oid))
     data = {'Timestamp': time.ctime(), 'Temp': result[0], 'Humidity': result[1]}
-    with open(filename, 'a', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=header)
-        writer.writerow(data)
+    with open(filename, 'a') as txtfile:
+        txtfile.write(f'{dumps(data)}\n')
 
 
 if __name__ == '__main__':
